@@ -135,6 +135,9 @@ body.watching .pip{transform:none;opacity:1}
 .pip .frame{position:relative;aspect-ratio:16/9;max-width:100%;border-radius:12px;overflow:hidden;background:#000}
 .pip iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .pip .hint{color:#c9d6ee;font-size:12px;padding:6px 4px 0}
+.pip.big{inset:0;width:auto;border-radius:0;padding:max(8px,env(safe-area-inset-top,0px)) max(8px,env(safe-area-inset-right,0px)) max(8px,env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;background:#000}
+.pip.big .frame{flex:1;aspect-ratio:auto}
+.pip.big .hint{display:none}
 .pip:fullscreen{width:100vw;border-radius:0;padding:0;display:flex;flex-direction:column;justify-content:center;background:#000}
 .pip:fullscreen .frame{aspect-ratio:auto;flex:1;border-radius:0}
 .pip:fullscreen .hint{display:none}
@@ -165,7 +168,7 @@ body.watching .pip{transform:none;opacity:1}
 <div class="pip" id="pip" aria-hidden="true">
   <div class="bar2" id="pipbar"><span id="piptitle"></span><button type="button" id="pipfs">전체화면</button><button type="button" class="x" id="pipx">닫기 ✕</button></div>
   <div class="frame" id="pipframe"></div>
-  <div class="hint">영상을 두 번 누르면 크게 봐요</div>
+  <div class="hint">위쪽 줄을 두 번 누르거나 전체화면 버튼을 누르면 크게 봐요</div>
 </div>
 
 <script>
@@ -379,15 +382,19 @@ function openPip(s,v){
 }
 function closePip(){
   if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+  setBig(false);
   document.body.classList.remove("watching");pip.setAttribute("aria-hidden","true");
   setTimeout(()=>{document.getElementById("pipframe").innerHTML=""},300);
   if(pipSkill&&pipSkill.k&&stamps(pipSkill.k)<5)setTimeout(()=>toast("따라 해 봤어? 아빠한테 보여 줘!"),500);
 }
+function setBig(on){pip.classList.toggle("big",on);document.getElementById("pipfs").textContent=on?"작게 보기":"전체화면"}
 function fsPip(){
-  if(document.fullscreenElement){document.exitFullscreen().catch(()=>{});return}
-  (pip.requestFullscreen?pip.requestFullscreen():Promise.reject()).catch(()=>{
-    const f=pip.querySelector("iframe");f?.requestFullscreen?.().catch(()=>{})});
+  if(document.fullscreenElement){document.exitFullscreen().catch(()=>{});setBig(false);return}
+  if(pip.classList.contains("big")){setBig(false);return}
+  setBig(true);
+  try{const r=pip.requestFullscreen&&pip.requestFullscreen();if(r&&r.catch)r.catch(()=>{})}catch(e){}
 }
+document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&pip.classList.contains("big")&&document.body.classList.contains("watching")){/* keep big mode until user shrinks */}});
 document.getElementById("pipx").onclick=closePip;
 document.getElementById("pipfs").onclick=fsPip;
 document.getElementById("pipbar").ondblclick=fsPip;
