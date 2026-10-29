@@ -134,13 +134,24 @@ body.watching .pip{transform:none;opacity:1}
 .pip .bar2 .x{background:var(--orange);color:#fff}
 .pip .frame{position:relative;aspect-ratio:16/9;max-width:100%;border-radius:12px;overflow:hidden;background:#000}
 .pip iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-.pip .hint{color:#c9d6ee;font-size:12px;padding:6px 4px 0}
+.pip .ctrl{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:8px 2px 2px}
+.pip .ctrl button{border:0;border-radius:12px;font-family:var(--display);cursor:pointer}
+.pip .nav2{width:48px;height:44px;font-size:20px;background:var(--glow);color:#fff;box-shadow:0 3px 0 var(--grass-d)}
+.pip .nav2:active{transform:translateY(2px);box-shadow:0 1px 0 var(--grass-d)}
+.pip .fsb{height:44px;padding:0 12px;font-size:15px;background:var(--sun);color:var(--ink)}
+.pip .now{color:#fff;min-width:0;font-size:13px;line-height:1.35}
+.pip .now b{font-family:var(--display);font-weight:400;font-size:15px}
+.pip .now .chip{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:99px;background:rgba(255,255,255,.18);margin-right:4px}
+.pip .now .t{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#d6e2f5}
+@media (max-width:600px){.pip{left:max(8px,env(safe-area-inset-left,0px));right:max(8px,env(safe-area-inset-right,0px));width:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+ .pip .ctrl{grid-template-columns:auto minmax(0,1fr) auto;}
+ .pip .fsb{grid-column:1/-1;width:100%}}
 .pip.big{inset:0;width:auto;border-radius:0;padding:max(8px,env(safe-area-inset-top,0px)) max(8px,env(safe-area-inset-right,0px)) max(8px,env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;background:#000}
 .pip.big .frame{flex:1;aspect-ratio:auto}
-.pip.big .hint{display:none}
+.pip.big .ctrl{flex:none}
 .pip:fullscreen{width:100vw;border-radius:0;padding:0;display:flex;flex-direction:column;justify-content:center;background:#000}
 .pip:fullscreen .frame{aspect-ratio:auto;flex:1;border-radius:0}
-.pip:fullscreen .hint{display:none}
+.pip:fullscreen .ctrl{padding:8px}
 @media (max-width:860px){
   .app{grid-template-columns:minmax(0,1fr)}
   .side{position:static;padding:10px}
@@ -166,30 +177,35 @@ body.watching .pip{transform:none;opacity:1}
 </div>
 <div class="toast" id="toast" role="status"></div>
 <div class="pip" id="pip" aria-hidden="true">
-  <div class="bar2" id="pipbar"><span id="piptitle"></span><button type="button" id="pipfs">전체화면</button><button type="button" class="x" id="pipx">닫기 ✕</button></div>
+  <div class="bar2" id="pipbar"><span id="piptitle"></span><button type="button" class="x" id="pipx" aria-label="닫기">닫기 ✕</button></div>
   <div class="frame" id="pipframe"></div>
-  <div class="hint">위쪽 줄을 두 번 누르거나 전체화면 버튼을 누르면 크게 봐요</div>
+  <div class="ctrl">
+    <button type="button" class="nav2" id="pipprev" aria-label="이전 영상">◀</button>
+    <div class="now" id="pipnow"></div>
+    <button type="button" class="nav2" id="pipnext" aria-label="다음 영상">▶</button>
+    <button type="button" class="fsb" id="pipfs">⛶ 전체화면</button>
+  </div>
 </div>
 
 <script>
 /* ---------- data ---------- */
 const SKILLS=[
  {k:"pass",nm:"인사이드 패스",lv:1,desc:"발 안쪽 넓은 면으로 친구에게 똑바로! 디딤발은 공 옆에, 발끝은 친구 쪽을 봐요.",st:[2,5,4],pair:"curl",
-  v:[["N1s4_nrMFSI", "Kỹ thuật nhả bóng bằng lòng bàn chân", "SYF Bóng đá trẻ em", "0:49", "vi"],["i_8iBVjMXpU", "Bóng đá 1 phút cho trẻ: chuyền - nhận bóng", "NESTLE MILO VIETNAM", "1:18", "vi"],["rE0gLUAjSJc", "Chuyền bóng bằng lòng bàn chân chuẩn nhất", "Hocvien Dilmah", "0:45", "vi"],["qqqsc5n0haI", "Kỹ thuật chuyền bóng bằng lòng bàn chân", "Soccer7v7", "5:04", "vi"],["0Xmoz1ScNGE","1학년 인사이드 패스 연습","JINI COACH","1:18"],["3Pi7y7jzTy4","인사이드 패스 연습하기","영인쌤의체육교실","3:25"],["fMHHK9aHWMc","인사이드 패스 기본 자세","태풍TV","3:47"]]},
+  v:[["cR9Dspq-Kjo", "인사이드패스 강좌", "축구배울래?", "6:26", "ko", "긴 강좌"], ["93PRpMZ1nhY", "Kỹ thuật đá bóng bằng lòng bàn chân", "Thethao VNU", "8:46", "vi", "긴 강좌"], ["9UyPy1cL0RA", "인사이드패스의 원리(완전 쉽게)", "사커 튜토리얼", "1:53", "ko", "원리 이야기"], ["v-_gj06GCFw", "Đá bóng bằng lòng bàn chân, phân tích chi tiết", "King ball", "6:19", "vi", "핵심 설명"], ["i_8iBVjMXpU", "Bóng đá 1 phút cho trẻ: chuyền - nhận bóng", "NESTLE MILO VIETNAM", "1:18", "vi", "어린이용"], ["fMHHK9aHWMc", "인사이드 패스 기본 자세 (집에서도 연습)", "태풍TV", "3:47", "ko", "따라 연습"]]},
  {k:"trap",nm:"볼 트래핑",lv:1,desc:"굴러오는 공을 발바닥이나 발 안쪽으로 살짝 멈춰요. 공이 도망가지 않게 발을 뒤로 빼 주기!",st:[2,5,3],pair:"air",
-  v:[["I5JyosRQom8", "Dừng bóng bằng lòng bàn chân", "GIÁO DỤC THỂ CHẤT", "1:21", "vi"],["liTwGbkGLuk", "Khống chế & chuyền bóng", "NaNi Kids Futsal", "0:23", "vi"],["i_8iBVjMXpU", "Bóng đá 1 phút cho trẻ: chuyền - nhận bóng", "NESTLE MILO VIETNAM", "1:18", "vi"],["AK8aMVpfH4g", "Di chuyển khống chế và chuyền bóng", "Tiến Hưng Nguyễn", "3:31", "vi"],["69ryl76ZBB8","1~2학년 인사이드 트래핑","FUTURE GREAT","0:35"],["t13f8Lkp6ZQ","축구기본기 인사이드 트래핑","공부하는 축구쌤 김캡틴","1:33"],["dNRMN2XBKps","인사이드 컨트롤 기본","태풍TV","3:46"]]},
+  v:[["9LFWxSyovwI", "Hướng dẫn chi tiết đỡ bóng sệt, khống chế bóng sệt", "Học viện bóng đá phủi", "23:23", "vi", "긴 강좌"], ["nabbWAeTGkg", "볼 관리의 비결, 퍼스트 터치", "지니풋볼", "3:58", "ko", "핵심 설명"], ["gAnnwNm1vrM", "퍼스트 터치 잘하기 위한 무릎 사용", "안정환 19", "0:42", "ko", "핵심 설명"], ["dNRMN2XBKps", "인사이드 컨트롤 기본 / 공이 튀는 이유", "태풍TV", "3:46", "ko", "원리 이야기"], ["Ia8MUaKjiNY", "5 bài tập đỡ bóng bước 1", "YouSport Channel", "4:35", "vi", "따라 연습"], ["1EQTE7YS_AA", "퍼스트 터치 정석 꿀팁", "JUSTGO 풋볼", "4:18", "ko", "핵심 설명"]]},
  {k:"drib",nm:"드리블",lv:1,desc:"공을 발 가까이 두고 톡톡 밀면서 달려요. 고개를 자주 들어 앞을 보는 게 비밀!",st:[4,4,5],pair:"step",
-  v:[["5M3hRsKbXFU", "Kỹ thuật cơ bản cho trẻ mới tập", "KIMCHISPORT", "0:11", "vi"],["H3vuFPqd2Kk", "Bài tập rê bóng 2 chân", "Thuận Chân Phải", "0:19", "vi"],["259RoqI9EE4", "Bài tập đơn giản kiểm soát bóng", "Bóng đá Hoằng Hóa", "0:24", "vi"],["y1eAWG7QbDk", "Kỹ thuật cơ bản cho trẻ em - Football Dream Đông Anh", "PaceX", "11:18", "vi"],["OHBhQlfpQTA","어린이 드리블 기초 5가지","축구왕김지후","2:31"],["uNeWQlikrS8","어린이 드리블 기초 10가지","축구왕김지후","4:58"],["YCWa4ThtIQY","콘으로 하는 드리블 16가지","축구도전","5:22"]]},
+  v:[["Hy0WsiaxDYU", "인사이드 드리블 기초: 자세부터 실전까지", "태풍TV", "9:09", "ko", "긴 강좌"], ["Uz_VkHiF33o", "Kỹ thuật dẫn bóng", "Thethao VNU", "8:29", "vi", "긴 강좌"], ["uNeWQlikrS8", "어린이 축구교실 드리블 기초 10가지", "축구왕김지후", "4:58", "ko", "어린이용"], ["1nscwoZf7ms", "기초 드리블 하는 방법", "풋볼퀄리티", "2:43", "ko", "핵심 설명"], ["BktU57QCZ_8", "10 kỹ thuật cơ bản quan trọng nhất", "Tungage", "9:27", "vi", "긴 강좌"], ["PONcufMhTXI", "기본 드리블 28가지 볼 마스터리", "사커 튜토리얼", "37:15", "ko", "따라 연습"]]},
  {k:"shoot",nm:"슛팅",lv:1,desc:"디딤발을 공 옆에 딱! 발등으로 공 가운데를 맞히면 쭉 날아가요.",st:[5,3,5],pair:"gk",
-  v:[["AhR1H6PPECY", "Trọng tâm sút bóng bằng mu bàn chân", "NaNi Kids Futsal", "0:46", "vi"],["Wds8odJl4rQ", "Sút bóng bằng mu trong bàn chân", "YOUNG STAR FOOTBALL", "1:44", "vi"],["HbNS6mFk9xg", "Bài tập sút bóng bằng mu bàn chân", "Genio Academy", "1:24", "vi"],["UpUXhZhLmzY", "Khi trái bóng lăn: sút bóng tại chỗ", "Toyota Việt Nam", "7:06", "vi"],["o3lccz53W_A","축구 킥의 기본자세","ㅇㅅㅇ","1:26"],["cRM7MVt6GS8","강한 슈팅의 기본 원리","고알레 GOALE","3:51"],["FmPsFggXYEE","온라인 축구교실 슈팅 기본자세","마포구체육회","7:06"]]},
+  v:[["M_4Tlx6KxBM", "Kỹ thuật sút bóng bằng mu bàn chân", "Học viện bóng đá phủi", "9:00", "vi", "긴 강좌"], ["meBJgegCICY", "인스텝 킥 하는 방법", "풋볼퀄리티", "4:42", "ko", "핵심 설명"], ["IfsCAgaaqpk", "기초 인스텝 슈팅·패스 (윤슨생 축구교실)", "Football DNA", "3:20", "ko", "어린이용"], ["E4RCmabnus0", "왕초보 인스텝 슈팅 배우기", "키드짐스포츠클럽", "4:10", "ko", "어린이용"], ["gQ6LISlIMCY", "Các bước sút bóng mạnh và chuẩn xác", "Túc Cầu Sport", "4:30", "vi", "핵심 설명"], ["XeGF0w9G0jA", "프로선수들이 쓰는 실전 슈팅 팁", "고알레 GOALE", "4:46", "ko", "따라 연습"]]},
  {k:"curl",nm:"감아차기",lv:2,desc:"발 안쪽으로 공 옆을 문지르듯 차면 바나나처럼 휘어요. 몸은 살짝 기울이기!",st:[3,4,5],from:"pass",
-  v:[["viufWmCngBQ", "Kỹ thuật cứa lòng - sút bóng xoáy", "YouSport Channel", "4:59", "vi"],["SEloH-Rg1rA", "Sút xoáy má trong", "Thy Freestyle Soccer", "3:49", "vi"],["lx-1NCSO_Cw", "Kỹ thuật cứa lòng vòng cung", "NEYMARSPORT", "5:19", "vi"],["pR2sNU0yJys", "Học sút xoáy vòng cung", "Tungage", "7:12", "vi"],["u_fU4zsgENU","감아차기 배우기","모서리에새끼발가락","0:15"],["Tx6qaTWB5To","감아차기 차는 법","9KANG","2:47"],["4dU4p3aHMyQ","이동국이 알려주는 감아차기 팁","이동국TV","5:39"]]},
+  v:[["viufWmCngBQ", "Kỹ thuật cứa lòng - sút bóng xoáy", "YouSport Channel", "4:59", "vi", "긴 강좌"], ["dg-dpRllpfs", "실전 적용 감아차기 차는 법", "풋볼퀄리티", "4:52", "ko", "핵심 설명"], ["XQfVGG87AL8", "감아차기는 왜 가능할까? (마그누스 효과)", "잡지식", "6:54", "ko", "원리 이야기"], ["Tx6qaTWB5To", "감아차기 차는법 비법", "9KANG", "2:47", "ko", "핵심 설명"], ["lx-1NCSO_Cw", "Kỹ thuật cứa lòng vòng cung", "NEYMARSPORT", "5:19", "vi", "따라 연습"], ["e5njVgQLOmU", "감아차기 업그레이드! 경기 중 실전 감차", "안정환 19", "9:37", "ko", "긴 강좌"]]},
  {k:"air",nm:"공중볼 트래핑",lv:2,desc:"날아오는 공을 허벅지·발등으로 받아요. 공이 닿는 순간 몸을 살짝 빼면 튀지 않고 툭 떨어져요.",st:[2,5,4],from:"trap",
-  v:[["Ia8MUaKjiNY", "5 bài tập đỡ bóng bổng, bóng sệt", "YouSport Channel", "4:35", "vi"],["rjhwSMXpR-I", "Đỡ bóng bổng không văng ra xa", "King ball", "10:34", "vi"],["zMC02s97m5I", "혼자 하는 공중볼 트래핑 훈련", "풋볼멘토스쿨", "5:57", "vi"],["hqdXZ2aRyX0", "공중볼 이동 트래핑", "태풍TV", "4:52", "vi"],["wDXI4mOvFIg","유소년 공중볼 컨트롤","RAK 락풋볼","3:35"],["gO9balTr8Yk","튕기지 않는 트래핑 3가지","고알레 GOALE","4:38"],["HKiMx1ISBpk","어린이축구교실 컨트롤훈련 공중볼","도봉구체육회","7:10"]]},
+  v:[["0HfX-Q94vfM", "공중볼 트래핑: 인스텝·허벅지·가슴", "태풍TV", "8:33", "ko", "긴 강좌"], ["rjhwSMXpR-I", "Khống chế bóng bổng, đỡ bóng không văng xa", "King ball", "10:34", "vi", "긴 강좌"], ["gq43u8hEo6s", "불규칙 바운드 공 잡는 부위", "안정환 19", "0:37", "ko", "핵심 설명"], ["hc8PAPT0b_o", "공중볼 트래핑 잘 하는 방법", "풋볼퀄리티", "3:58", "ko", "핵심 설명"], ["gO9balTr8Yk", "튕기지 않는 트래핑 3가지", "고알레 GOALE", "4:38", "ko", "따라 연습"], ["vDBsWjdcwjc", "초보를 위한 공중볼 잘 잡는 법", "사커 튜토리얼", "14:38", "ko", "긴 강좌"]]},
  {k:"step",nm:"헛다리 따돌리기",lv:2,desc:"공 위로 발을 휙 돌려서 속인 다음, 반대쪽으로 쓩! 수비수가 깜짝 놀라요.",st:[4,3,5],from:"drib",
-  v:[["3vptqpbno44", "Kỹ thuật đảo chân step over", "YouSport Channel", "3:17", "vi"],["QZIE7r403Wc", "Đảo chân step over như Neymar", "NEYMARSPORT", "4:54", "vi"],["nQ1DbClkDvU", "Đảo chân đơn giản, dễ tập", "AnyTime Soccer", "5:20", "vi"],["CGHRiMqWxPQ", "Step over từ dễ đến khó", "Tungage", "9:37", "vi"],["a3TfdJHwVUU","헛다리 짚기 응용 기본기","판나코리아","2:09"],["ifN_kUVPnek","헛다리 짚기 잘하고 싶다면","김보경의 KBK 풋볼","3:58"],["TgTU1-UdQbw","이영표의 스텝오버 강좌","JTBC","3:32"]]},
+  v:[["4iZ1b_ES7OE", "시저스 드리블 완벽 정리 (기초편)", "쌈바 풋살 클래스", "4:21", "ko", "긴 강좌"], ["3vptqpbno44", "Hướng dẫn kỹ thuật đảo chân step over", "YouSport Channel", "3:17", "vi", "핵심 설명"], ["SlJ49ve-o50", "시저스 헛다리 드리블 기본 훈련", "풋볼멘토스쿨", "4:37", "ko", "따라 연습"], ["CGHRiMqWxPQ", "Step over từ dễ nhất tới khó nhất", "Tungage", "9:37", "vi", "긴 강좌"], ["v37vCgMWbLg", "시저스, 제대로 알고 쓰면 효과 2배", "고알레 GOALE", "4:05", "ko", "핵심 설명"], ["a3TfdJHwVUU", "헛다리 짚기 응용 기본기", "판나코리아", "2:09", "ko", "따라 연습"]]},
  {k:"gk",nm:"골키퍼 막기",lv:2,desc:"무릎을 살짝 굽히고 손은 W 모양으로 준비! 공을 끝까지 보고 몸으로 감싸 안아요.",st:[4,4,4],from:"shoot",
-  v:[["w_Bd83dLy1w", "Kỹ thuật cơ bản của thủ môn", "YouSport Channel", "5:36", "vi"],["dTD09cMh_CY", "Form tay bắt bóng cơ bản", "Thể Thao iWin", "0:15", "vi"],["1l99s4ggsZU", "Cách bắt bóng sệt siêu dễ", "nickqtran", "0:12", "vi"],["RiprGp0_fCI", "Sửa lỗi thủ môn: đổ người bắt bóng", "VietGoal - Dạy bóng đá trẻ em", "0:24", "vi"],["QEPrdutZyWU","조현우가 알려주는 골키퍼 훈련","디글","0:34"],["Xp8mCFNFpPg","유소년 GK 기본기 강좌","N_FC 풋볼라이프","7:04"],["tB2bXqiEtFE","골키퍼 기본 자세 및 스텝","GK 열혈강호","8:58"]]}
+  v:[["w_Bd83dLy1w", "Những kỹ thuật cơ bản của thủ môn", "YouSport Channel", "5:36", "vi", "긴 강좌"], ["tB2bXqiEtFE", "골키퍼 기본 지침서 1장: 기본 자세·스텝", "GK 열혈강호", "8:58", "ko", "긴 강좌"], ["kAR2ktiGGEg", "골키퍼가 가장 많이 하는 실수: 캐칭편", "GK 열혈강호", "5:35", "ko", "핵심 설명"], ["RviBAzZCkZY", "Bắt bóng lăn sệt và bóng tầm ngang", "King ball", "7:33", "vi", "핵심 설명"], ["YABmyz27Y0o", "Kỹ thuật bắt bóng bổng của thủ môn", "King ball", "4:56", "vi", "핵심 설명"], ["Xp8mCFNFpPg", "유소년 GK 기본기: 캐칭부터 다이빙까지", "N_FC 풋볼라이프", "7:04", "ko", "따라 연습"]]}
 ];
 const BYK=Object.fromEntries(SKILLS.map(s=>[s.k,s]));
 
@@ -213,7 +229,7 @@ let cur="pass",view="skills",dadOpen=false;
 const LS="yejun-soccer-v1";
 try{const s=JSON.parse(localStorage.getItem(LS)||"null");if(s)state=Object.assign(state,s)}catch(e){}
 function stamps(k){return Math.min(5,state.stamps[k]||0)}
-function unlocked(k){const s=BYK[k];return s.lv===1||stamps(s.from)>=5}
+function unlocked(k){return true}
 async function save(){
   try{localStorage.setItem(LS,JSON.stringify(state))}catch(e){}
 }
@@ -282,15 +298,14 @@ function renderSkills(){
       ${open?`<p class="desc">${s.desc}</p>`:lockedMsg}
       <div class="stats">${bar("SPEED",sp,"#3ddc6a")}${bar("CONTROL",ct,"#ff8a3d")}${bar("FUN",fn,"#ffc93c")}</div>
       ${open?`<div class="btns">
-        <button class="btn go" id="learn">배워보기 ▶</button>
-        <button class="btn alt" id="next">다른 영상</button>
+        <button class="btn go" id="learn">영상 보기 ▶</button>
         ${n<5?`<button class="btn dad" id="dadbtn">아빠, 봐줘!</button>`:`<span class="trophy">마스터 완료!</span>`}
       </div>
-      <div class="vidnote">영상 ${vi+1}/${s.v.length} ${v[4]==="vi"?"[Tiếng Việt]":"[한국어]"}: ${v[1]} · ${v[2]} · ${v[3]}<br>배워보기를 누르면 이 화면에서 영상이 떠요.</div>
+      <div class="vidnote">영상 ${s.v.length}개 · ${[...new Set(s.v.map(x=>x[5]))].join(" · ")}<br>영상 창의 ◀ ▶ 로 넘겨 봐요.</div>
       ${stampRow}${dad}`:""}
     </div>
   </section>
-  <div class="gridhead"><h2>스킬 고르기</h2><p>윗줄을 해내면 아랫줄 자물쇠가 열려요</p></div>
+  <div class="gridhead"><h2>스킬 고르기</h2><p>카드를 누르면 바로 영상이 떠요</p></div>
   <div class="grid">${SKILLS.map(x=>{const o=unlocked(x.k),m=stamps(x.k);return `
     <button class="card ${o?"":"locked"}" data-k="${x.k}" aria-pressed="${x.k===cur}">
       ${cardSVG(x.k)}
@@ -299,9 +314,8 @@ function renderSkills(){
       <span class="sub">${o?`<span class="mini">${[0,1,2,3,4].map(i=>`<i class="${i<m?"on":""}"></i>`).join("")}</span><span>${m>=5?"마스터":m+"/5"}</span>`:`<span>${BYK[x.from].nm} ${stamps(x.from)}/5</span>`}</span>
     </button>`}).join("")}</div>`;
   document.getElementById("fig").innerHTML=figSVG(shown,{sw:6});
-  main.querySelectorAll(".card").forEach(c=>c.onclick=()=>{cur=c.dataset.k;dadOpen=false;renderSkills();zoom();tweenTo(cur)});
-  const ln=document.getElementById("learn");if(ln)ln.onclick=()=>openPip(s,v);
-  const nx=document.getElementById("next");if(nx)nx.onclick=()=>{state.vidx[cur]=(vi+1)%s.v.length;save();renderSkills();toast(`새 영상: ${s.v[state.vidx[cur]][1]}`)};
+  main.querySelectorAll(".card").forEach(c=>c.onclick=()=>{cur=c.dataset.k;dadOpen=false;renderSkills();zoom();tweenTo(cur);const t=BYK[cur];openPip(t.nm,t.v,"sk_"+cur,t.k)});
+  const ln=document.getElementById("learn");if(ln)ln.onclick=()=>openPip(s.nm,s.v,"sk_"+cur,s.k);
   const db_=document.getElementById("dadbtn");if(db_)db_.onclick=()=>{dadOpen=true;renderSkills();document.getElementById("pin")?.focus()};
   const dx=document.getElementById("dadx");if(dx)dx.onclick=()=>{dadOpen=false;renderSkills()};
   const f=document.getElementById("dadform");if(f)f.onsubmit=e=>{e.preventDefault();
@@ -312,8 +326,7 @@ function renderSkills(){
 function giveStamp(k){
   state.stamps[k]=Math.min(5,stamps(k)+1);dadOpen=false;save();
   const s=BYK[k];renderSkills();
-  if(stamps(k)>=5&&s.pair){toast(`딸깍! ${BYK[s.pair].nm} 자물쇠가 열렸어!`);const c=main.querySelector(`.card[data-k="${s.pair}"]`);c?.classList.add("unlocking")}
-  else if(stamps(k)>=5)toast(`${s.nm} 마스터! 대단해!`);
+  if(stamps(k)>=5)toast(`${s.nm} 마스터! 대단해!`);
   else toast(`도장 쾅! ${s.nm} ${stamps(k)}/5`);
 }
 function zoom(){const h=document.getElementById("hero");if(!h)return;h.classList.remove("zoom");void h.offsetWidth;h.classList.add("zoom")}
@@ -322,7 +335,7 @@ let tt;function toast(t){const el=document.getElementById("toast");el.textConten
 /* ---------- info panels ---------- */
 const TIPV={"어깨 체크": [["C-nxXYu1gNE", "숄더체크·하프턴 패스훈련", "N_FC 풋볼라이프", "2:36"]], "2초에 한 번 고개 들기": [["2v_iURIR0iI", "공만 보고 드리블하는 이유", "축구도사 메기", "0:31"], ["L4HFyYkYVt4", "초등 2학년 기본 드리블", "Lee YeKeon", "0:14"]], "빈 공간 찾기": [["bjuNrtxrFgY", "볼과 함께 하는 워밍업(움직임 향상)", "축규쟁이김코치", "4:10"]], "차기 → 허벅지 앞": [["kW8wRrLn9gc", "허벅지 근육의 구조", "KBS 생로병사의 비밀", "0:43"]], "달리기 → 종아리·허벅지 뒤": [["3FI3g5xvC84", "달리기도 기술이다! 바른 자세", "YBM 초등체육", "0:40"], ["iulTDJDXp0M", "축구선수 근육학 햄스트링", "조가볼라", "1:38"]], "균형 → 배·엉덩이": [["84FZhwnehBk", "1분 외발서기 운동", "부산대학교병원", "0:52"], ["94HvLXRJz3k", "한 발 서기 운동법", "KBS 생로병사의 비밀", "1:20"]], "종아리 쓸어 올리기": [["OxTzJ1wr5wI", "러닝 후 종아리 셀프 마사지", "재활언니", "4:14"]], "허벅지 톡톡": [["tX0MIm71IMA", "정형외과 의사의 러닝 후 셀프 마사지", "스미닥", "4:50"]], "10초 스트레칭": [["7fqY9q2bomw", "운동 후 쿨다운 스트레칭", "여리나핏", "5:11"], ["zDcOqeLGymE", "8분 쿨다운 스트레칭", "빅씨스", "8:50"]], "축구공 4호": [["1EQ1bMbkPdk", "축구공 사이즈 4호·5호", "스타스포츠", "2:30"], ["p4-TXDqztDU", "아이들을 위한 축구공 사이즈 가이드", "프싸로그", "5:33"]], "정강이 보호대": [["QfedLYm-EJg", "신가드 몇 호를 껴야 할까?", "ut crazy11", "2:25"], ["VFmcuoP_VX0", "축구용 신가드 한 편 정리", "축구아내", "6:13"]], "축구화": [["wm5NPVWRgq8", "축구화 스터드 차이 총정리", "축구화만켤레", "5:04"], ["-wBHm0dBerQ", "축구화 끈 안 풀리게 묶는 법", "여담후니", "0:30"]]};
 const TIPV_VI={"어깨 체크": [["h0xYm8_gx-4", "Tầm nhìn và sự quan sát trong bóng đá", "YouSport Channel", "5:14"]], "2초에 한 번 고개 들기": [["5M3hRsKbXFU", "Bài tập kỹ thuật cơ bản cho trẻ mới tập", "KIMCHISPORT", "0:11"], ["H3vuFPqd2Kk", "Bài tập rê bóng 2 chân", "Thuận Chân Phải", "0:19"]], "빈 공간 찾기": [["jOeh-BW6Tt4", "3 yếu tố giúp di chuyển không bóng hiệu quả", "YouSport Channel", "4:27"]], "차기 → 허벅지 앞": [["gQ6LISlIMCY", "Các bước sút bóng mạnh và chuẩn xác", "Túc Cầu Sport", "4:30"]], "달리기 → 종아리·허벅지 뒤": [["QrFycg4w5vg", "Kỹ thuật chạy bộ đúng", "morning_chaybo", "0:54"]], "균형 → 배·엉덩이": [["AG1if78Ah6o", "Thăng bằng 1 chân đúng chuẩn", "CEC Ninja Kids", "2:15"], ["wQbTK51TRko", "Tập thăng bằng đứng", "BV PHCN Hà Nội Khoa Nhi", "1:03"]], "종아리 쓸어 올리기": [["qAm7eaxlM0Q", "Kỹ năng massage chân đơn giản", "Bác sĩ Nguyễn Trọng Thuỷ", "0:23"], ["zGfTazo0ZcE", "Giãn cơ, mẹo hồi phục nhanh", "Bongdaday", "3:58"]], "허벅지 톡톡": [["qAm7eaxlM0Q", "Kỹ năng massage chân đơn giản", "Bác sĩ Nguyễn Trọng Thuỷ", "0:23"]], "10초 스트레칭": [["OK4wxCMJOf0", "5 phút giãn cơ sau khi chạy", "Hubert Cù", "5:54"], ["zGfTazo0ZcE", "Giãn cơ, mẹo hồi phục nhanh", "Bongdaday", "3:58"]], "정강이 보호대": [["xYhuaPonVW0", "Cách dùng tất và bảo vệ ống đồng", "Mizuno Việt Nam", "4:31"]], "축구화": [["SZtNDjI-Y3Y", "Chọn giày bóng đá cho trẻ em", "NEYMARSPORT", "4:37"], ["aSN477dZV-M", "2 cách buộc dây giày không bao giờ tuột", "Cavat Han Quoc", "3:46"]]};
-function tipVids(h){const vi=TIPV_VI[h];return (state.lang!=="ko"&&vi)?vi:(TIPV[h]||[])}
+function tipVids(h){const vi=TIPV_VI[h];return (state.lang!=="ko"&&vi)?vi.map(v=>[...v.slice(0,4),"vi"]):(TIPV[h]||[]).map(v=>[...v.slice(0,4),"ko"])}
 const PANELS={
  vision:{t:"시야 전략",lead:"공만 보면 친구도, 빈 공간도 안 보여요. 진짜 선수들은 공이 오기 전에 이미 주변을 봐 둬요.",tips:[
   ["어깨 체크","공을 받기 전에 고개를 돌려 어깨 너머를 한 번 봐요. 뒤에 수비수가 있는지 미리 알 수 있어요.","<b>놀이</b> 패스 받기 직전에 아빠가 \"뒤!\" 하면 고개 돌리기"],
@@ -348,11 +361,10 @@ function renderPanel(id){
   main.innerHTML=`<section class="panel"><h1>${p.t}</h1><p class="lead">${p.lead}</p>
    <div class="btns" style="margin:-4px 0 14px;align-items:center"><span style="font-size:13px;color:var(--ink-soft)">영상 언어</span><button class="btn ${state.lang!=="ko"?"go":"alt"} lg" data-l="vi" style="font-size:14px;padding:6px 12px">Tiếng Việt</button><button class="btn ${state.lang==="ko"?"go":"alt"} lg" data-l="ko" style="font-size:14px;padding:6px 12px">한국어</button></div>
    <div class="tips">${p.tips.map(([h,t,g],i)=>{const vs=tipVids(h),vi=(state.vidx[id+i]||0)%(vs.length||1);return `<div class="tip"><h3>${h}</h3><p>${t}</p><div class="game">${g}</div>
-     ${vs.length?`<div class="btns" style="margin-top:10px"><button class="btn go tv" data-i="${i}" style="font-size:15px;padding:8px 12px">영상 보기 ▶</button>${vs.length>1?`<button class="btn alt tn" data-i="${i}" style="font-size:15px;padding:8px 12px">다른 영상</button>`:""}</div>
-     <div style="font-size:12.5px;color:var(--ink-soft);margin-top:6px">${vs[vi][1]} · ${vs[vi][2]} · ${vs[vi][3]}${state.lang!=="ko"&&!TIPV_VI[h]?" (한국어 영상)":""}</div>`:""}</div>`}).join("")}</div>
+     ${vs.length?`<div class="btns" style="margin-top:10px"><button class="btn go tv" data-i="${i}" style="font-size:15px;padding:8px 12px">영상 보기 ▶ <small style="opacity:.85">${vs.length}개</small></button></div>
+     <div style="font-size:12.5px;color:var(--ink-soft);margin-top:6px">${state.lang!=="ko"&&!TIPV_VI[h]?"한국어 영상":(state.lang!=="ko"?"Tiếng Việt":"한국어")}</div>`:""}</div>`}).join("")}</div>
    ${id==="gear"?settingsHTML():""}</section>`;
-  main.querySelectorAll(".tv").forEach(b=>b.onclick=()=>{const i=+b.dataset.i,h=p.tips[i][0],vs=tipVids(h);openPip({nm:h},vs[(state.vidx[id+i]||0)%vs.length])});
-  main.querySelectorAll(".tn").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;state.vidx[id+i]=(state.vidx[id+i]||0)+1;save();renderPanel(id)});
+  main.querySelectorAll(".tv").forEach(b=>b.onclick=()=>{const i=+b.dataset.i,h=p.tips[i][0];openPip(h,tipVids(h),id+i+state.lang,null)});
   main.querySelectorAll(".lg").forEach(b=>b.onclick=()=>{state.lang=b.dataset.l;state.vidx={...state.vidx};save();renderPanel(id)});
   if(id==="gear")bindSettings();
 }
@@ -373,21 +385,32 @@ function bindSettings(){
 }
 
 /* ---------- PIP player ---------- */
-const pip=document.getElementById("pip");let pipSkill=null;
-function openPip(s,v){
-  pipSkill=s;
-  document.getElementById("piptitle").textContent=s.nm+" · "+v[1];
+const pip=document.getElementById("pip");let P={title:"",list:[],key:"",skill:null,i:0};
+function playCur(){
+  const v=P.list[P.i];
+  document.getElementById("piptitle").textContent=P.title;
+  document.getElementById("pipnow").innerHTML=`<b>${P.i+1}/${P.list.length}</b> <span class="chip">${v[4]==="vi"?"Tiếng Việt":"한국어"}</span>${v[5]?`<span class="chip">${v[5]}</span>`:""}<span class="t">${v[1]} · ${v[2]} · ${v[3]}</span>`;
   document.getElementById("pipframe").innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${v[0]}?autoplay=1&rel=0&playsinline=1&modestbranding=1" title="${v[1]}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+  const one=P.list.length<2;document.getElementById("pipprev").disabled=one;document.getElementById("pipnext").disabled=one;
+  state.vidx[P.key]=P.i;save();
+}
+function openPip(title,list,key,skill){
+  if(!list||!list.length)return;
+  P={title,list,key,skill,i:(state.vidx[key]||0)%list.length};
+  playCur();
   document.body.classList.add("watching");pip.setAttribute("aria-hidden","false");
 }
+function stepPip(d){P.i=(P.i+d+P.list.length)%P.list.length;playCur()}
+document.getElementById("pipprev").onclick=()=>stepPip(-1);
+document.getElementById("pipnext").onclick=()=>stepPip(1);
 function closePip(){
   if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
   setBig(false);
   document.body.classList.remove("watching");pip.setAttribute("aria-hidden","true");
   setTimeout(()=>{document.getElementById("pipframe").innerHTML=""},300);
-  if(pipSkill&&pipSkill.k&&stamps(pipSkill.k)<5)setTimeout(()=>toast("따라 해 봤어? 아빠한테 보여 줘!"),500);
+  if(P.skill&&stamps(P.skill)<5)setTimeout(()=>toast("따라 해 봤어? 아빠한테 보여 줘!"),500);
 }
-function setBig(on){pip.classList.toggle("big",on);document.getElementById("pipfs").textContent=on?"작게 보기":"전체화면"}
+function setBig(on){pip.classList.toggle("big",on);document.getElementById("pipfs").textContent=on?"⛶ 작게 보기":"⛶ 전체화면"}
 function fsPip(){
   if(document.fullscreenElement){document.exitFullscreen().catch(()=>{});setBig(false);return}
   if(pip.classList.contains("big")){setBig(false);return}
@@ -398,7 +421,9 @@ document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement
 document.getElementById("pipx").onclick=closePip;
 document.getElementById("pipfs").onclick=fsPip;
 document.getElementById("pipbar").ondblclick=fsPip;
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!document.fullscreenElement&&document.body.classList.contains("watching"))closePip()});
+document.getElementById("pipnow").ondblclick=fsPip;
+document.addEventListener("keydown",e=>{if(document.body.classList.contains("watching")&&(e.key==="ArrowRight"||e.key==="ArrowLeft")&&e.target.tagName!=="INPUT"){stepPip(e.key==="ArrowRight"?1:-1);return}
+  if(e.key==="Escape"&&!document.fullscreenElement&&document.body.classList.contains("watching"))closePip()});
 
 /* ---------- render & boot ---------- */
 const main=document.getElementById("main");
